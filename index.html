@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#16a34a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CatatKu">
+<meta name="description" content="Aplikasi catatan penjualan pulsa, kuota, token, dan e-wallet">
+<title>AliceOlshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #16a34a;
+  --primary-light: #22c55e;
+  --primary-dark: #15803d;
+  --primary-bg: #f0fdf4;
+  --accent: #0ea5e9;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --success: #16a34a;
+  --text: #111827;
+  --text-mid: #374151;
+  --text-light: #6b7280;
+  --bg: #f9fafb;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --nav-h: 72px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+body { display: flex; flex-direction: column; }
+
+/* ====== PIN SCREEN ====== */
+#pin-screen {
+  position: fixed; inset: 0; background: linear-gradient(160deg, #15803d 0%, #16a34a 40%, #22c55e 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 1000; gap: 0;
+}
+.pin-logo { font-size: 56px; margin-bottom: 4px; }
+.pin-title { color: #fff; font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
+.pin-sub { color: rgba(255,255,255,0.8); font-size: 15px; font-weight: 600; margin-bottom: 32px; }
+.pin-display {
+  background: rgba(255,255,255,0.15); border-radius: 16px; padding: 16px 32px;
+  display: flex; gap: 14px; margin-bottom: 8px;
+}
+.pin-dot {
+  width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.8);
+  background: transparent; transition: background 0.15s;
+}
+.pin-dot.filled { background: #fff; border-color: #fff; }
+#pin-error {
+  color: #fca5a5; font-size: 15px; font-weight: 700; min-height: 24px;
+  margin-bottom: 16px; text-align: center;
+}
+.pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 280px; }
+.pin-btn {
+  background: rgba(255,255,255,0.18); border: none; border-radius: 14px;
+  color: #fff; font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 800;
+  height: 70px; cursor: pointer; transition: background 0.1s, transform 0.1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.pin-btn:active { background: rgba(255,255,255,0.35); transform: scale(0.93); }
+.pin-btn.del { font-size: 22px; }
+.pin-btn.empty { background: transparent; cursor: default; }
+
+/* ====== APP WRAPPER ====== */
+#app { display: none; flex-direction: column; height: 100vh; position: relative; }
+#app.visible { display: flex; }
+
+/* ====== HEADER ====== */
+.app-header {
+  background: var(--primary); color: #fff; padding: 14px 18px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; min-height: 60px;
+}
+.header-title { font-size: 20px; font-weight: 900; }
+.header-sub { font-size: 12px; font-weight: 600; opacity: 0.8; margin-top: 1px; }
+.header-btn {
+  background: rgba(255,255,255,0.2); border: none; border-radius: 10px;
+  color: #fff; padding: 8px 14px; font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+
+/* ====== PAGES ====== */
+.pages { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: var(--nav-h); }
+.page { display: none; padding: 16px; animation: fadeIn 0.2s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ====== BOTTOM NAV ====== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h);
+  background: var(--card); border-top: 2px solid var(--border);
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  z-index: 100; box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; cursor: pointer; transition: color 0.15s; padding: 4px 0;
+  color: var(--text-light); border: none; background: none; font-family: 'Nunito', sans-serif;
+}
+.nav-item.active { color: var(--primary); }
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 700; }
+
+/* ====== CARDS ====== */
+.card {
+  background: var(--card); border-radius: var(--radius); padding: 16px;
+  box-shadow: var(--shadow); margin-bottom: 12px;
+}
+.card-header { font-size: 13px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.card-value { font-size: 28px; font-weight: 900; color: var(--text); }
+.card-value.green { color: var(--primary); }
+.card-value.blue { color: var(--accent); }
+.card-row { display: flex; justify-content: space-between; align-items: center; }
+
+/* ====== STAT GRID ====== */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.stat-card {
+  background: var(--card); border-radius: var(--radius-sm); padding: 14px 12px;
+  box-shadow: var(--shadow); text-align: center;
+}
+.stat-icon { font-size: 24px; margin-bottom: 4px; }
+.stat-label { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.stat-val { font-size: 18px; font-weight: 900; color: var(--text); }
+.stat-val.green { color: var(--primary); }
+
+/* ====== SECTION TITLE ====== */
+.section-title { font-size: 16px; font-weight: 800; color: var(--text); margin: 16px 0 10px; }
+
+/* ====== TRANSACTION LIST ====== */
+.tx-item {
+  background: var(--card); border-radius: var(--radius-sm); padding: 12px 14px;
+  margin-bottom: 8px; box-shadow: var(--shadow); display: flex;
+  align-items: center; gap: 12px; cursor: pointer; transition: transform 0.1s;
+}
+.tx-item:active { transform: scale(0.98); }
+.tx-icon {
+  width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; font-size: 20px; flex-shrink: 0;
+}
+.tx-icon.pulsa { background: #dbeafe; }
+.tx-icon.kuota { background: #ede9fe; }
+.tx-icon.token { background: #fef9c3; }
+.tx-icon.dana { background: #dbeafe; }
+.tx-icon.gopay { background: #d1fae5; }
+.tx-icon.ovo { background: #ede9fe; }
+.tx-icon.shopeepay { background: #fee2e2; }
+.tx-info { flex: 1; min-width: 0; }
+.tx-name { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-detail { font-size: 12px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+.tx-amount { text-align: right; flex-shrink: 0; }
+.tx-total { font-size: 15px; font-weight: 900; color: var(--text); }
+.tx-status { font-size: 11px; font-weight: 700; margin-top: 2px; }
+.tx-status.lunas { color: var(--primary); }
+.tx-status.hutang { color: var(--danger); }
+
+/* ====== BUTTONS ====== */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; border-radius: var(--radius-sm); font-family: 'Nunito', sans-serif;
+  font-weight: 800; cursor: pointer; transition: all 0.15s; width: 100%;
+  padding: 16px; font-size: 17px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-success { background: var(--primary); color: #fff; }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.btn-gray { background: var(--border); color: var(--text-mid); }
+.btn-wa { background: #25D366; color: #fff; }
+.btn-sm { padding: 10px 16px; font-size: 14px; }
+.btn-icon { font-size: 20px; }
+
+/* ====== FORM ====== */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 14px; font-weight: 800; color: var(--text-mid); margin-bottom: 6px; display: block; }
+.form-label .req { color: var(--danger); }
+.form-input {
+  width: 100%; border: 2px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px 16px; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
+  color: var(--text); background: var(--card); outline: none; transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--primary); }
+.form-input::placeholder { color: var(--text-light); font-weight: 600; }
+select.form-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+
+/* ====== TYPE BUTTONS GRID ====== */
+.type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.type-btn {
+  border: 2.5px solid var(--border); border-radius: 12px; padding: 10px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; background: var(--card); transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.type-btn:active { transform: scale(0.94); }
+.type-btn.selected { border-color: var(--primary); background: var(--primary-bg); }
+.type-btn-icon { font-size: 22px; }
+.type-btn-label { font-size: 11px; font-weight: 800; color: var(--text-mid); }
+.type-btn.selected .type-btn-label { color: var(--primary); }
+
+/* ====== SEARCH ====== */
+.search-box {
+  position: relative; margin-bottom: 12px;
+}
+.search-input {
+  width: 100%; border: 2px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 16px 12px 44px; font-family: 'Nunito', sans-serif; font-size: 16px;
+  font-weight: 700; color: var(--text); background: var(--card); outline: none;
+}
+.search-input:focus { border-color: var(--primary); }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--text-light); }
+
+/* ====== DEBT LIST ====== */
+.debt-total {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius); padding: 20px; color: #fff; margin-bottom: 16px;
+  text-align: center;
+}
+.debt-total-label { font-size: 14px; font-weight: 700; opacity: 0.85; }
+.debt-total-value { font-size: 36px; font-weight: 900; margin-top: 4px; }
+.debtor-item {
+  background: var(--card); border-radius: var(--radius-sm); padding: 14px 16px;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+  cursor: pointer; box-shadow: var(--shadow); transition: transform 0.1s;
+}
+.debtor-item:active { transform: scale(0.98); }
+.debtor-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.debtor-dot.red { background: var(--danger); }
+.debtor-dot.yellow { background: var(--warning); }
+.debtor-dot.green { background: var(--primary); }
+.debtor-info { flex: 1; min-width: 0; }
+.debtor-name { font-size: 16px; font-weight: 800; }
+.debtor-count { font-size: 12px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+.debtor-amount { font-size: 17px; font-weight: 900; }
+.debtor-amount.red { color: var(--danger); }
+.debtor-amount.yellow { color: var(--warning); }
+.debtor-amount.green { color: var(--primary); }
+
+/* ====== DETAIL PAGE ====== */
+.detail-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius); padding: 20px; color: #fff; margin-bottom: 16px;
+}
+.detail-name { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+.detail-phone { font-size: 14px; opacity: 0.85; font-weight: 600; }
+.detail-debt { font-size: 32px; font-weight: 900; margin-top: 10px; }
+.detail-debt-label { font-size: 13px; opacity: 0.8; font-weight: 700; }
+
+/* ====== MODAL ====== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.hidden { display: none; }
+.modal-box {
+  background: var(--card); border-radius: 24px 24px 0 0; width: 100%; max-height: 85vh;
+  overflow-y: auto; padding: 24px 20px; animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-title { font-size: 20px; font-weight: 900; margin-bottom: 16px; }
+.modal-preview {
+  background: var(--primary-bg); border: 2px solid var(--border); border-radius: 12px;
+  padding: 16px; font-size: 14px; font-weight: 600; line-height: 1.7; white-space: pre-wrap;
+  color: var(--text); margin-bottom: 16px; word-break: break-word;
+}
+.modal-actions { display: flex; gap: 10px; }
+.modal-actions .btn { flex: 1; }
+
+/* ====== REPORT ====== */
+.report-filter { display: flex; gap: 10px; margin-bottom: 16px; }
+.report-filter select { flex: 1; }
+.report-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.report-card {
+  background: var(--card); border-radius: var(--radius-sm); padding: 12px 10px;
+  text-align: center; box-shadow: var(--shadow);
+}
+.report-card-label { font-size: 10px; font-weight: 800; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.report-card-val { font-size: 14px; font-weight: 900; color: var(--text); }
+.report-card-val.green { color: var(--primary); }
+
+/* ====== TOAST ====== */
+#toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+  background: #111; color: #fff; border-radius: 50px; padding: 12px 22px;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+  z-index: 9999; transition: transform 0.3s ease; white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.success { background: var(--primary); }
+#toast.error { background: var(--danger); }
+
+/* ====== EMPTY STATE ====== */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text-light); }
+.empty-icon { font-size: 56px; margin-bottom: 12px; }
+.empty-text { font-size: 16px; font-weight: 700; }
+.empty-sub { font-size: 14px; margin-top: 6px; }
+
+/* ====== SETTINGS ====== */
+.setting-item {
+  background: var(--card); border-radius: var(--radius-sm); padding: 16px;
+  margin-bottom: 10px; box-shadow: var(--shadow);
+}
+.setting-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.setting-sub { font-size: 13px; color: var(--text-light); font-weight: 600; }
+
+/* ====== GAS CONFIG ====== */
+.gas-status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.gas-dot { width: 10px; height: 10px; border-radius: 50%; }
+.gas-dot.connected { background: var(--primary); }
+.gas-dot.disconnected { background: var(--danger); }
+
+/* ====== BADGE ====== */
+.badge {
+  display: inline-block; border-radius: 50px; padding: 3px 10px;
+  font-size: 11px; font-weight: 800;
+}
+.badge-success { background: #dcfce7; color: var(--primary); }
+.badge-danger { background: #fee2e2; color: var(--danger); }
+
+/* ====== DIVIDER ====== */
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+/* ====== LOADING ====== */
+#loading-overlay {
+  position: fixed; inset: 0; background: rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 800; flex-direction: column; gap: 12px;
+}
+#loading-overlay.hidden { display: none; }
+.spinner {
+  width: 40px; height: 40px; border: 4px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 15px; font-weight: 700; color: var(--text-light); }
+
+/* ====== CONFIRM DIALOG ====== */
+#confirm-dialog {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 600;
+}
+#confirm-dialog.hidden { display: none; }
+.confirm-box {
+  background: var(--card); border-radius: 20px; padding: 24px 20px;
+  margin: 20px; max-width: 360px; width: 100%;
+  animation: popIn 0.2s ease;
+}
+@keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.confirm-title { font-size: 20px; font-weight: 900; margin-bottom: 10px; }
+.confirm-msg { font-size: 15px; color: var(--text-mid); font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions .btn { flex: 1; }
+
+/* ====== JENIS CHIP ====== */
+.jenis-chip {
+  display: inline-block; border-radius: 6px; padding: 3px 8px;
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+}
+
+/* edit/delete btns */
+.action-row { display: flex; gap: 8px; margin-top: 8px; }
+.action-row .btn { flex: 1; padding: 10px; font-size: 14px; }
+
+/* ====== SUB PAGE ====== */
+#subpage {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; z-index: 200; overflow: hidden;
+}
+#subpage.hidden { display: none; }
+.subpage-header {
+  background: var(--primary); color: #fff; padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.back-btn {
+  background: rgba(255,255,255,0.2); border: none; border-radius: 10px;
+  color: #fff; font-size: 20px; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.subpage-title { font-size: 18px; font-weight: 900; flex: 1; }
+.subpage-body { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 24px; }
+
+/* ====== SCROLLBAR ====== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-4 { margin-bottom: 4px; }
+.text-center { text-align: center; }
+.text-sm { font-size: 13px; }
+.text-muted { color: var(--text-light); }
+.font-bold { font-weight: 800; }
+.flex { display: flex; }
+.justify-between { justify-content: space-between; }
+.items-center { align-items: center; }
+.gap-8 { gap: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ===== PIN SCREEN ===== -->
+<div id="pin-screen">
+  <div class="pin-logo">🏪</div>
+  <div class="pin-title">LaporanAliceOlshop</div>
+  <div class="pin-sub">Masukkan PIN untuk masuk</div>
+  <div class="pin-display" id="pin-display">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+    <div class="pin-dot" id="d4"></div>
+    <div class="pin-dot" id="d5"></div>
+  </div>
+  <div id="pin-error"></div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn empty"></button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <!-- Header -->
+  <div class="app-header" id="app-header">
+    <div>
+      <div class="header-title" id="header-title">📊 Dashboard</div>
+      <div class="header-sub" id="header-date"></div>
+    </div>
+    <button class="header-btn" onclick="doLogout()">Keluar</button>
+  </div>
+
+  <!-- Pages -->
+  <div class="pages">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-label">Penjualan Hari Ini</div>
+          <div class="stat-val green" id="stat-today">Rp 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗓️</div>
+          <div class="stat-label">Penjualan Bulan Ini</div>
+          <div class="stat-val green" id="stat-month">Rp 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Keuntungan Bulan Ini</div>
+          <div class="stat-val green" id="stat-profit">Rp 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📦</div>
+          <div class="stat-label">Jumlah Transaksi</div>
+          <div class="stat-val" id="stat-count">0</div>
+        </div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;" id="debt-banner">
+        <div class="card-header" style="color:rgba(255,255,255,0.8)">💳 Total Piutang</div>
+        <div class="card-value" id="stat-debt" style="color:#fff">Rp 0</div>
+        <div style="font-size:12px;font-weight:600;opacity:0.8;margin-top:4px" id="stat-debt-count"></div>
+      </div>
+      <div class="section-title">⏱️ 5 Transaksi Terakhir</div>
+      <div id="recent-list"></div>
+    </div>
+
+    <!-- TAMBAH TRANSAKSI -->
+    <div class="page" id="page-tambah">
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">Nama Pelanggan <span class="req">*</span></label>
+          <input type="text" class="form-input" id="f-nama" placeholder="Contoh: Bu Sari" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nomor WhatsApp (opsional)</label>
+          <input type="tel" class="form-input" id="f-hp" placeholder="08xxxxxxxxxx">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal Pembelian <span class="req">*</span></label>
+          <input type="date" class="form-input" id="f-tanggal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jenis Transaksi <span class="req">*</span></label>
+          <div class="type-grid" id="type-grid">
+            <div class="type-btn" data-type="pulsa" onclick="selectType(this)">
+              <span class="type-btn-icon">📱</span><span class="type-btn-label">Pulsa</span>
+            </div>
+            <div class="type-btn" data-type="kuota" onclick="selectType(this)">
+              <span class="type-btn-icon">📡</span><span class="type-btn-label">Kuota</span>
+            </div>
+            <div class="type-btn" data-type="token" onclick="selectType(this)">
+              <span class="type-btn-icon">⚡</span><span class="type-btn-label">Token</span>
+            </div>
+            <div class="type-btn" data-type="dana" onclick="selectType(this)">
+              <span class="type-btn-icon">💙</span><span class="type-btn-label">DANA</span>
+            </div>
+            <div class="type-btn" data-type="gopay" onclick="selectType(this)">
+              <span class="type-btn-icon">💚</span><span class="type-btn-label">GoPay</span>
+            </div>
+            <div class="type-btn" data-type="ovo" onclick="selectType(this)">
+              <span class="type-btn-icon">💜</span><span class="type-btn-label">OVO</span>
+            </div>
+            <div class="type-btn" data-type="shopeepay" onclick="selectType(this)">
+              <span class="type-btn-icon">🛒</span><span class="type-btn-label">ShopeePay</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nominal (Rp) <span class="req">*</span></label>
+          <input type="number" class="form-input" id="f-nominal" placeholder="Contoh: 50000" min="0" inputmode="numeric" onchange="updateAdminPreview()">
+        </div>
+        <div class="card" style="background:var(--primary-bg);padding:12px;margin-bottom:16px;" id="admin-preview-box">
+          <div class="flex justify-between"><span class="text-muted text-sm">Nominal</span><span class="font-bold" id="preview-nominal">Rp 0</span></div>
+          <div class="flex justify-between mt-8"><span class="text-muted text-sm">Biaya Admin</span><span class="font-bold" style="color:var(--warning);" id="preview-admin">+ Rp 0</span></div>
+          <div class="divider"></div>
+          <div class="flex justify-between"><span class="font-bold">Total</span><span class="font-bold" style="color:var(--primary);font-size:18px;" id="preview-total">Rp 0</span></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status Pembayaran</label>
+          <select class="form-input" id="f-status">
+            <option value="belum_bayar">💳 Belum Bayar (Hutang)</option>
+            <option value="sudah_bayar">✅ Sudah Bayar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan (opsional)</label>
+          <input type="text" class="form-input" id="f-ket" placeholder="Contoh: paket Indosat 30 hari">
+        </div>
+        <button class="btn btn-primary" onclick="submitTransaction()" id="submit-btn">
+          <span class="btn-icon">💾</span> Simpan Transaksi
+        </button>
+      </div>
+    </div>
+
+    <!-- HUTANG -->
+    <div class="page" id="page-hutang">
+      <div class="debt-total">
+        <div class="debt-total-label">💳 Total Piutang Semua Pelanggan</div>
+        <div class="debt-total-value" id="debt-total-val">Rp 0</div>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="debt-search" placeholder="Cari nama pelanggan..." oninput="renderDebtors()">
+      </div>
+      <div id="debtor-list"></div>
+    </div>
+
+    <!-- LAPORAN -->
+    <div class="page" id="page-laporan">
+      <div class="report-filter">
+        <select class="form-input" id="rep-month" onchange="renderReport()"></select>
+        <select class="form-input" id="rep-year" onchange="renderReport()"></select>
+      </div>
+      <div class="report-grid">
+        <div class="report-card">
+          <div class="report-card-label">Penjualan</div>
+          <div class="report-card-val green" id="rep-total">Rp 0</div>
+        </div>
+        <div class="report-card">
+          <div class="report-card-label">Keuntungan</div>
+          <div class="report-card-val green" id="rep-profit">Rp 0</div>
+        </div>
+        <div class="report-card">
+          <div class="report-card-label">Transaksi</div>
+          <div class="report-card-val" id="rep-count">0</div>
+        </div>
+      </div>
+      <div class="section-title">📋 Rincian per Jenis</div>
+      <div id="rep-breakdown"></div>
+    </div>
+
+    <!-- RIWAYAT -->
+    <div class="page" id="page-riwayat">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="hist-search" placeholder="Cari nama atau jenis..." oninput="renderHistory()">
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- PENGATURAN -->
+    <div class="page" id="page-pengaturan">
+      <div class="setting-item">
+        <div class="setting-title">🔐 Ubah PIN</div>
+        <div class="setting-sub">Ganti PIN login aplikasi</div>
+        <div class="mt-12">
+          <div class="form-group">
+            <label class="form-label">PIN Lama</label>
+            <input type="password" class="form-input" id="pin-old" placeholder="Masukkan PIN lama" maxlength="6" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label class="form-label">PIN Baru (min. 6 digit)</label>
+            <input type="password" class="form-input" id="pin-new" placeholder="Masukkan PIN baru" maxlength="10" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Konfirmasi PIN Baru</label>
+            <input type="password" class="form-input" id="pin-confirm" placeholder="Ulangi PIN baru" maxlength="10" inputmode="numeric">
+          </div>
+          <button class="btn btn-primary" onclick="changePin()"><span class="btn-icon">✅</span> Simpan PIN Baru</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-title">☁️ Sinkronisasi Google Sheets</div>
+        <div class="setting-sub">Opsional: simpan data ke Google Sheets via Apps Script</div>
+        <div id="gas-status-row" class="mt-8"></div>
+        <div class="mt-12">
+          <div class="form-group">
+            <label class="form-label">URL Google Apps Script</label>
+            <input type="url" class="form-input" id="gas-url" placeholder="https://script.google.com/macros/s/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Secret Key</label>
+            <input type="text" class="form-input" id="gas-key" placeholder="Masukkan secret key">
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="saveGasConfig()"><span class="btn-icon">💾</span> Simpan Konfigurasi</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-title">🗑️ Hapus Semua Data</div>
+        <div class="setting-sub">Hati-hati! Data yang dihapus tidak bisa dikembalikan.</div>
+        <div class="mt-12">
+          <button class="btn btn-danger btn-sm" onclick="confirmClearAll()"><span class="btn-icon">⚠️</span> Hapus Semua Data Transaksi</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-title">ℹ️ Tentang Aplikasi</div>
+        <div class="setting-sub">AliceOlshop v1.0 — Aplikasi pencatatan penjualan pulsa, kuota, token, dan e-wallet. Dibuat untuk kemudahan pedagang.</div>
+        <div class="mt-8 text-sm text-muted">Data disimpan di memori HP (localStorage).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+      <span class="nav-icon">🏠</span><span class="nav-label">Beranda</span>
+    </button>
+    <button class="nav-item" id="nav-tambah" onclick="showPage('tambah')">
+      <span class="nav-icon">➕</span><span class="nav-label">Tambah</span>
+    </button>
+    <button class="nav-item" id="nav-hutang" onclick="showPage('hutang')">
+      <span class="nav-icon">💳</span><span class="nav-label">Hutang</span>
+    </button>
+    <button class="nav-item" id="nav-laporan" onclick="showPage('laporan')">
+      <span class="nav-icon">📊</span><span class="nav-label">Laporan</span>
+    </button>
+    <button class="nav-item" id="nav-riwayat" onclick="showPage('riwayat')">
+      <span class="nav-icon">📜</span><span class="nav-label">Riwayat</span>
+    </button>
+    <button class="nav-item" id="nav-pengaturan" onclick="showPage('pengaturan')">
+      <span class="nav-icon">⚙️</span><span class="nav-label">Setelan</span>
+    </button>
+  </div>
+</div>
+
+<!-- SUBPAGE (Customer Detail) -->
+<div id="subpage" class="hidden">
+  <div class="subpage-header">
+    <button class="back-btn" onclick="closeSubpage()">◀</button>
+    <div class="subpage-title">Detail Pelanggan</div>
+  </div>
+  <div class="subpage-body" id="subpage-body"></div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Transaksi</div>
+    <div class="form-group">
+      <label class="form-label">Nama</label>
+      <input type="text" class="form-input" id="edit-nama">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nomor HP</label>
+      <input type="tel" class="form-input" id="edit-hp">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tanggal</label>
+      <input type="date" class="form-input" id="edit-tanggal">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nominal</label>
+      <input type="number" class="form-input" id="edit-nominal" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input" id="edit-status">
+        <option value="belum_bayar">💳 Belum Bayar</option>
+        <option value="sudah_bayar">✅ Sudah Bayar</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Keterangan</label>
+      <input type="text" class="form-input" id="edit-ket">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeEditModal()">Batal</button>
+      <button class="btn btn-primary" onclick="saveEdit()"><span>💾</span> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- WA PREVIEW MODAL -->
+<div class="modal-overlay hidden" id="wa-modal">
+  <div class="modal-box">
+    <div class="modal-title">📲 Preview Pesan WhatsApp</div>
+    <div class="modal-preview" id="wa-preview-text"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeWaModal()">Batal</button>
+      <button class="btn btn-wa" onclick="openWhatsApp()"><span>📲</span> Lanjut ke WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- LOADING -->
+<div id="loading-overlay" class="hidden">
+  <div class="spinner"></div>
+  <div class="loading-text">Memuat...</div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div id="confirm-dialog" class="hidden">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Konfirmasi</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-gray" onclick="confirmCancel()">Batal</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" onclick="confirmOk()">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+let pinInput = '';
+let selectedType = '';
+let editingId = null;
+let waLink = '';
+let confirmCallback = null;
+let currentPage = 'dashboard';
+
+// ==================== STORAGE ====================
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  rm: k => localStorage.removeItem(k)
+};
+
+function getTx() { return LS.get('catatku_tx') || []; }
+function setTx(d) { LS.set('catatku_tx', d); }
+function getPin() { return localStorage.getItem('catatku_pin') || '123789'; }
+function savePin(p) { localStorage.setItem('catatku_pin', p); }
+function getAttempts() { return parseInt(localStorage.getItem('catatku_attempts') || '0'); }
+function setAttempts(n) { localStorage.setItem('catatku_attempts', n); }
+function getLock() { return parseInt(localStorage.getItem('catatku_lock') || '0'); }
+function setLock(t) { localStorage.setItem('catatku_lock', t); }
+function getSession() { return localStorage.getItem('catatku_session') === '1'; }
+function setSession(v) { localStorage.setItem('catatku_session', v ? '1' : '0'); }
+function getGasUrl() { return localStorage.getItem('catatku_gas_url') || ''; }
+function getGasKey() { return localStorage.getItem('catatku_gas_key') || ''; }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// ==================== UTILS ====================
+function formatRp(n) {
+  if (!n && n !== 0) return 'Rp 0';
+  return 'Rp ' + Math.floor(n).toLocaleString('id-ID');
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function monthStr(date) {
+  const d = date || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function formatDate(s) {
+  if (!s) return '';
+  const [y,m,d] = s.split('-');
+  const months = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+  return `${parseInt(d)} ${months[parseInt(m)]} ${y}`;
+}
+function calcAdmin(jenis, nominal) {
+  const ewallet = ['dana','gopay','ovo','shopeepay'];
+  if (['pulsa','kuota','token'].includes(jenis)) return 3000;
+  if (ewallet.includes(jenis)) return nominal >= 100000 ? 10000 : 5000;
+  return 0;
+}
+function jenisIcon(j) {
+  const icons = { pulsa:'📱', kuota:'📡', token:'⚡', dana:'💙', gopay:'💚', ovo:'💜', shopeepay:'🛒' };
+  return icons[j] || '💰';
+}
+function jenisLabel(j) {
+  const labels = { pulsa:'Pulsa', kuota:'Kuota', token:'Token Listrik', dana:'DANA', gopay:'GoPay', ovo:'OVO', shopeepay:'ShopeePay' };
+  return labels[j] || j;
+}
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 2800);
+}
+function showLoading(show) {
+  document.getElementById('loading-overlay').className = show ? '' : 'hidden';
+}
+
+// ==================== CONFIRM ====================
+function showConfirm(title, msg, okLabel, okClass, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  const btn = document.getElementById('confirm-ok-btn');
+  btn.textContent = okLabel || 'Ya, Lanjutkan';
+  btn.className = 'btn ' + (okClass || 'btn-danger');
+  confirmCallback = cb;
+  document.getElementById('confirm-dialog').classList.remove('hidden');
+}
+function confirmOk() {
+  document.getElementById('confirm-dialog').classList.add('hidden');
+  if (confirmCallback) confirmCallback();
+}
+function confirmCancel() {
+  document.getElementById('confirm-dialog').classList.add('hidden');
+}
+
+// ==================== PIN ====================
+function pinPress(n) {
+  // Check lock
+  const lock = getLock();
+  if (lock > Date.now()) {
+    const secs = Math.ceil((lock - Date.now()) / 1000);
+    document.getElementById('pin-error').textContent = `⏳ Tunggu ${secs} detik...`;
+    return;
+  }
+  if (pinInput.length >= 6) return;
+  pinInput += n;
+  updatePinDots();
+  if (pinInput.length === 6) {
+    setTimeout(checkPin, 100);
+  }
+}
+function pinDel() {
+  pinInput = pinInput.slice(0, -1);
+  updatePinDots();
+}
+function updatePinDots() {
+  for (let i = 0; i < 6; i++) {
+    document.getElementById('d' + i).className = 'pin-dot' + (i < pinInput.length ? ' filled' : '');
+  }
+}
+function checkPin() {
+  if (pinInput === getPin()) {
+    setAttempts(0);
+    setSession(true);
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    showPage('dashboard');
+  } else {
+    let att = getAttempts() + 1;
+    setAttempts(att);
+    pinInput = '';
+    updatePinDots();
+    if (att >= 3) {
+      const lockUntil = Date.now() + 10000;
+      setLock(lockUntil);
+      setAttempts(0);
+      document.getElementById('pin-error').textContent = '❌ PIN salah 3x. Tunggu 10 detik.';
+      startLockCountdown(lockUntil);
+    } else {
+      document.getElementById('pin-error').textContent = `❌ PIN salah (${att}/3)`;
+    }
+  }
+}
+function startLockCountdown(lockUntil) {
+  const interval = setInterval(() => {
+    const left = Math.ceil((lockUntil - Date.now()) / 1000);
+    if (left <= 0) {
+      clearInterval(interval);
+      document.getElementById('pin-error').textContent = '';
+    } else {
+      document.getElementById('pin-error').textContent = `⏳ Tunggu ${left} detik...`;
+    }
+  }, 500);
+}
+function doLogout() {
+  setSession(false);
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('pin-screen').style.display = 'flex';
+  pinInput = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+}
+
+// ==================== NAVIGATION ====================
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const nav = document.getElementById('nav-' + page);
+  if (nav) nav.classList.add('active');
+  const titles = { dashboard:'📊 Beranda', tambah:'➕ Tambah Transaksi', hutang:'💳 Hutang Pelanggan', laporan:'📊 Laporan', riwayat:'📜 Riwayat', pengaturan:'⚙️ Pengaturan' };
+  document.getElementById('header-title').textContent = titles[page] || page;
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'hutang') renderDebtors();
+  if (page === 'laporan') initReport();
+  if (page === 'riwayat') renderHistory();
+  if (page === 'tambah') initTambah();
+  if (page === 'pengaturan') initSettings();
+}
+
+// ==================== DASHBOARD ====================
+function loadDashboard() {
+  const tx = getTx();
+  const today = todayStr();
+  const curMonth = monthStr();
+
+  const todayTx = tx.filter(t => t.tanggal === today);
+  const monthTx = tx.filter(t => t.tanggal && t.tanggal.startsWith(curMonth));
+  const debtTx = tx.filter(t => t.status === 'belum_bayar');
+
+  document.getElementById('stat-today').textContent = formatRp(todayTx.reduce((s,t) => s + (t.total||0), 0));
+  document.getElementById('stat-month').textContent = formatRp(monthTx.reduce((s,t) => s + (t.total||0), 0));
+  document.getElementById('stat-profit').textContent = formatRp(monthTx.reduce((s,t) => s + (t.keuntungan||0), 0));
+  document.getElementById('stat-count').textContent = monthTx.length;
+
+  const totalDebt = debtTx.reduce((s,t) => s + (t.total||0), 0);
+  document.getElementById('stat-debt').textContent = formatRp(totalDebt);
+  const debtors = [...new Set(debtTx.map(t => t.nama))];
+  document.getElementById('stat-debt-count').textContent = `${debtors.length} pelanggan belum bayar`;
+
+  const recent = [...tx].reverse().slice(0,5);
+  const list = document.getElementById('recent-list');
+  if (!recent.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Belum ada transaksi</div><div class="empty-sub">Tap ➕ untuk menambah</div></div>';
+    return;
+  }
+  list.innerHTML = recent.map(t => txItemHTML(t, false)).join('');
+}
+
+// ==================== TRANSACTION ITEM HTML ====================
+function txItemHTML(t, showActions) {
+  const statusEl = t.status === 'sudah_bayar'
+    ? '<span class="tx-status lunas">✅ Lunas</span>'
+    : '<span class="tx-status hutang">💳 Hutang</span>';
+  const actions = showActions ? `<div class="action-row">
+    <button class="btn btn-outline btn-sm" onclick="openEditModal('${t.id}')">✏️ Edit</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteTx('${t.id}')">🗑️ Hapus</button>
+  </div>` : '';
+  return `<div class="tx-item" onclick="${showActions ? 'void(0)' : ''}">
+    <div class="tx-icon ${t.jenis}">${jenisIcon(t.jenis)}</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.nama}</div>
+      <div class="tx-detail">${formatDate(t.tanggal)} · ${jenisLabel(t.jenis)}</div>
+      ${t.keterangan ? `<div class="tx-detail">${t.keterangan}</div>` : ''}
+      ${actions}
+    </div>
+    <div class="tx-amount">
+      <div class="tx-total">${formatRp(t.total)}</div>
+      ${statusEl}
+    </div>
+  </div>`;
+}
+
+// ==================== TAMBAH TRANSAKSI ====================
+function initTambah() {
+  if (editingId) return; // Don't reset if editing
+  document.getElementById('f-nama').value = '';
+  document.getElementById('f-hp').value = '';
+  document.getElementById('f-tanggal').value = todayStr();
+  document.getElementById('f-nominal').value = '';
+  document.getElementById('f-status').value = 'belum_bayar';
+  document.getElementById('f-ket').value = '';
+  selectedType = '';
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  updateAdminPreview();
+  document.getElementById('submit-btn').innerHTML = '<span class="btn-icon">💾</span> Simpan Transaksi';
+}
+function selectType(el) {
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+  updateAdminPreview();
+}
+function updateAdminPreview() {
+  const nominal = parseFloat(document.getElementById('f-nominal').value) || 0;
+  const admin = selectedType ? calcAdmin(selectedType, nominal) : 0;
+  const total = nominal + admin;
+  document.getElementById('preview-nominal').textContent = formatRp(nominal);
+  document.getElementById('preview-admin').textContent = '+ ' + formatRp(admin);
+  document.getElementById('preview-total').textContent = formatRp(total);
+}
+function submitTransaction() {
+  const nama = document.getElementById('f-nama').value.trim();
+  const hp = document.getElementById('f-hp').value.trim();
+  const tanggal = document.getElementById('f-tanggal').value;
+  const nominal = parseFloat(document.getElementById('f-nominal').value);
+  const status = document.getElementById('f-status').value;
+  const ket = document.getElementById('f-ket').value.trim();
+
+  if (!nama) { showToast('❌ Nama pelanggan wajib diisi', 'error'); return; }
+  if (!selectedType) { showToast('❌ Pilih jenis transaksi', 'error'); return; }
+  if (!nominal || nominal <= 0) { showToast('❌ Nominal harus diisi', 'error'); return; }
+  if (!tanggal) { showToast('❌ Tanggal wajib diisi', 'error'); return; }
+
+  const admin = calcAdmin(selectedType, nominal);
+  const total = nominal + admin;
+  const tx = {
+    id: genId(),
+    nama, nomor_hp: hp, tanggal, jenis: selectedType,
+    nominal, admin, total, keuntungan: admin,
+    status, keterangan: ket
+  };
+
+  const data = getTx();
+  data.push(tx);
+  setTx(data);
+
+  // Try sync to GAS
+  syncToGas(tx);
+
+  showToast('✅ Transaksi berhasil disimpan!');
+  initTambah();
+  showPage('dashboard');
+}
+
+// ==================== DEBT ====================
+function getDebtors() {
+  const tx = getTx();
+  const map = {};
+  tx.filter(t => t.status === 'belum_bayar').forEach(t => {
+    const k = t.nama;
+    if (!map[k]) map[k] = { nama: k, nomor_hp: t.nomor_hp || '', total: 0, count: 0, txs: [] };
+    map[k].total += t.total || 0;
+    map[k].count++;
+    map[k].txs.push(t);
+  });
+  return Object.values(map).sort((a,b) => b.total - a.total);
+}
+function renderDebtors() {
+  const debtors = getDebtors();
+  const totalAll = debtors.reduce((s,d) => s + d.total, 0);
+  document.getElementById('debt-total-val').textContent = formatRp(totalAll);
+
+  const q = (document.getElementById('debt-search').value || '').toLowerCase();
+  const filtered = q ? debtors.filter(d => d.nama.toLowerCase().includes(q)) : debtors;
+
+  const list = document.getElementById('debtor-list');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-text">Tidak ada hutang!</div><div class="empty-sub">Semua pelanggan sudah lunas</div></div>';
+    return;
+  }
+  list.innerHTML = filtered.map(d => {
+    let cls = d.total > 100000 ? 'red' : d.total > 50000 ? 'yellow' : 'green';
+    return `<div class="debtor-item" onclick="openCustomer('${escHtml(d.nama)}')">
+      <div class="debtor-dot ${cls}"></div>
+      <div class="debtor-info">
+        <div class="debtor-name">${escHtml(d.nama)}</div>
+        <div class="debtor-count">${d.count} transaksi belum bayar</div>
+      </div>
+      <div class="debtor-amount ${cls}">${formatRp(d.total)}</div>
+    </div>`;
+  }).join('');
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ==================== CUSTOMER DETAIL ====================
+function openCustomer(nama) {
+  const debtors = getDebtors();
+  const d = debtors.find(x => x.nama === nama);
+  if (!d) return;
+
+  const hp = formatHp(d.nomor_hp || '');
+  const txRows = d.txs.sort((a,b) => b.tanggal.localeCompare(a.tanggal)).map(t =>
+    `<div class="tx-item">
+      <div class="tx-icon ${t.jenis}">${jenisIcon(t.jenis)}</div>
+      <div class="tx-info">
+        <div class="tx-name">${jenisLabel(t.jenis)}</div>
+        <div class="tx-detail">${formatDate(t.tanggal)}${t.keterangan ? ' · ' + t.keterangan : ''}</div>
+      </div>
+      <div class="tx-amount">
+        <div class="tx-total">${formatRp(t.total)}</div>
+        <span class="tx-status hutang">Hutang</span>
+      </div>
+    </div>`
+  ).join('');
+
+  const body = `
+    <div class="detail-header">
+      <div class="detail-name">👤 ${escHtml(d.nama)}</div>
+      ${d.nomor_hp ? `<div class="detail-phone">📱 ${d.nomor_hp}</div>` : ''}
+      <div class="detail-debt-label">Total Hutang</div>
+      <div class="detail-debt">${formatRp(d.total)}</div>
+    </div>
+    <button class="btn btn-success" onclick="markAllPaid('${escHtml(d.nama)}')">
+      <span class="btn-icon">💰</span> Tandai Sudah Bayar
+    </button>
+    ${d.nomor_hp ? `<button class="btn btn-wa mt-12" onclick="previewWa('${escHtml(d.nama)}')">
+      <span class="btn-icon">📲</span> Kirim Tagihan ke WhatsApp
+    </button>` : `<div class="mt-12 text-sm text-muted text-center">ℹ️ Tidak ada nomor HP tersimpan</div>`}
+    <div class="section-title">📋 Daftar Hutang</div>
+    ${txRows}
+  `;
+  document.getElementById('subpage-body').innerHTML = body;
+  document.getElementById('subpage').classList.remove('hidden');
+}
+function closeSubpage() {
+  document.getElementById('subpage').classList.add('hidden');
+}
+function markAllPaid(nama) {
+  showConfirm('Tandai Lunas?', `Semua hutang ${nama} akan ditandai sudah bayar. Lanjutkan?`, '✅ Ya, Lunas', 'btn-success', () => {
+    const data = getTx();
+    data.forEach(t => { if (t.nama === nama && t.status === 'belum_bayar') t.status = 'sudah_bayar'; });
+    setTx(data);
+    showToast('✅ Semua hutang sudah dilunasi!');
+    closeSubpage();
+    renderDebtors();
+  });
+}
+
+// ==================== WHATSAPP ====================
+function formatHp(hp) {
+  if (!hp) return '';
+  let n = hp.replace(/\D/g,'');
+  if (n.startsWith('0')) n = '62' + n.slice(1);
+  if (!n.startsWith('62')) n = '62' + n;
+  return n;
+}
+function previewWa(nama) {
+  const debtors = getDebtors();
+  const d = debtors.find(x => x.nama === nama);
+  if (!d || !d.nomor_hp) { showToast('❌ Nomor HP tidak tersedia', 'error'); return; }
+
+  const rows = d.txs.sort((a,b) => a.tanggal.localeCompare(b.tanggal)).map(t =>
+    `${formatDate(t.tanggal)} - ${jenisLabel(t.jenis)} - ${formatRp(t.total)}`
+  ).join('\n');
+
+  const msg = `Halo ${d.nama} 👋\n\nIni rincian transaksi kamu:\n\n${rows}\n\nTotal yang harus dibayar: ${formatRp(d.total)}\n\nTerima kasih 🙏`;
+  document.getElementById('wa-preview-text').textContent = msg;
+
+  const hp = formatHp(d.nomor_hp);
+  waLink = `https://wa.me/${hp}?text=${encodeURIComponent(msg)}`;
+
+  document.getElementById('wa-modal').classList.remove('hidden');
+}
+function openWhatsApp() {
+  if (waLink) window.open(waLink, '_blank');
+  closeWaModal();
+}
+function closeWaModal() {
+  document.getElementById('wa-modal').classList.add('hidden');
+}
+
+// ==================== REPORT ====================
+function initReport() {
+  const ms = document.getElementById('rep-month');
+  const ys = document.getElementById('rep-year');
+  if (!ms.children.length) {
+    const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    months.forEach((m,i) => ms.innerHTML += `<option value="${i+1}">${m}</option>`);
+    const curY = new Date().getFullYear();
+    for (let y = curY; y >= curY - 3; y--) ys.innerHTML += `<option value="${y}">${y}</option>`;
+    ms.value = new Date().getMonth() + 1;
+    ys.value = curY;
+  }
+  renderReport();
+}
+function renderReport() {
+  const m = parseInt(document.getElementById('rep-month').value);
+  const y = parseInt(document.getElementById('rep-year').value);
+  const prefix = `${y}-${String(m).padStart(2,'0')}`;
+  const tx = getTx().filter(t => t.tanggal && t.tanggal.startsWith(prefix));
+
+  document.getElementById('rep-total').textContent = formatRp(tx.reduce((s,t) => s+(t.total||0),0));
+  document.getElementById('rep-profit').textContent = formatRp(tx.reduce((s,t) => s+(t.keuntungan||0),0));
+  document.getElementById('rep-count').textContent = tx.length;
+
+  const byJenis = {};
+  tx.forEach(t => {
+    if (!byJenis[t.jenis]) byJenis[t.jenis] = { count:0, total:0, profit:0 };
+    byJenis[t.jenis].count++;
+    byJenis[t.jenis].total += t.total || 0;
+    byJenis[t.jenis].profit += t.keuntungan || 0;
+  });
+
+  const bd = document.getElementById('rep-breakdown');
+  if (!Object.keys(byJenis).length) {
+    bd.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Tidak ada data bulan ini</div></div>';
+    return;
+  }
+  bd.innerHTML = Object.entries(byJenis).map(([j, v]) => `
+    <div class="card" style="padding:12px;margin-bottom:8px;">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-8">
+          <span style="font-size:24px;">${jenisIcon(j)}</span>
+          <div>
+            <div class="font-bold">${jenisLabel(j)}</div>
+            <div class="text-sm text-muted">${v.count} transaksi · Untung ${formatRp(v.profit)}</div>
+          </div>
+        </div>
+        <div class="font-bold" style="font-size:16px;color:var(--primary)">${formatRp(v.total)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ==================== HISTORY ====================
+function renderHistory() {
+  const q = (document.getElementById('hist-search').value || '').toLowerCase();
+  let tx = [...getTx()].reverse();
+  if (q) tx = tx.filter(t => t.nama.toLowerCase().includes(q) || (t.jenis && t.jenis.includes(q)) || jenisLabel(t.jenis).toLowerCase().includes(q));
+
+  const list = document.getElementById('history-list');
+  if (!tx.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Tidak ada transaksi</div></div>';
+    return;
+  }
+  list.innerHTML = tx.map(t => txItemHTML(t, true)).join('');
+}
+
+// ==================== EDIT ====================
+function openEditModal(id) {
+  const t = getTx().find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('edit-nama').value = t.nama;
+  document.getElementById('edit-hp').value = t.nomor_hp || '';
+  document.getElementById('edit-tanggal').value = t.tanggal;
+  document.getElementById('edit-nominal').value = t.nominal;
+  document.getElementById('edit-status').value = t.status;
+  document.getElementById('edit-ket').value = t.keterangan || '';
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.add('hidden');
+  editingId = null;
+}
+function saveEdit() {
+  const data = getTx();
+  const idx = data.findIndex(x => x.id === editingId);
+  if (idx === -1) return;
+  const t = data[idx];
+  const nominal = parseFloat(document.getElementById('edit-nominal').value) || t.nominal;
+  const admin = calcAdmin(t.jenis, nominal);
+  data[idx] = {
+    ...t,
+    nama: document.getElementById('edit-nama').value.trim() || t.nama,
+    nomor_hp: document.getElementById('edit-hp').value.trim(),
+    tanggal: document.getElementById('edit-tanggal').value || t.tanggal,
+    nominal, admin, total: nominal + admin, keuntungan: admin,
+    status: document.getElementById('edit-status').value,
+    keterangan: document.getElementById('edit-ket').value.trim()
+  };
+  setTx(data);
+  closeEditModal();
+  renderHistory();
+  showToast('✅ Transaksi berhasil diperbarui!');
+}
+function deleteTx(id) {
+  showConfirm('Hapus Transaksi?', 'Transaksi ini akan dihapus permanen. Yakin?', '🗑️ Hapus', 'btn-danger', () => {
+    const data = getTx().filter(x => x.id !== id);
+    setTx(data);
+    renderHistory();
+    showToast('✅ Transaksi dihapus!');
+  });
+}
+
+// ==================== SETTINGS ====================
+function initSettings() {
+  document.getElementById('pin-old').value = '';
+  document.getElementById('pin-new').value = '';
+  document.getElementById('pin-confirm').value = '';
+  const gasUrl = getGasUrl();
+  const gasKey = getGasKey();
+  document.getElementById('gas-url').value = gasUrl;
+  document.getElementById('gas-key').value = gasKey;
+  const statusRow = document.getElementById('gas-status-row');
+  if (gasUrl) {
+    statusRow.innerHTML = `<div class="gas-status"><div class="gas-dot connected"></div> Tersambung ke Google Sheets</div>`;
+  } else {
+    statusRow.innerHTML = `<div class="gas-status"><div class="gas-dot disconnected"></div> Belum terhubung</div>`;
+  }
+}
+function changePin() {
+  const old = document.getElementById('pin-old').value;
+  const nw = document.getElementById('pin-new').value;
+  const conf = document.getElementById('pin-confirm').value;
+  if (old !== getPin()) { showToast('❌ PIN lama tidak sesuai', 'error'); return; }
+  if (nw.length < 6) { showToast('❌ PIN baru minimal 6 digit', 'error'); return; }
+  if (nw !== conf) { showToast('❌ Konfirmasi PIN tidak sama', 'error'); return; }
+  savePin(nw);
+  showToast('✅ PIN berhasil diubah!');
+  document.getElementById('pin-old').value = '';
+  document.getElementById('pin-new').value = '';
+  document.getElementById('pin-confirm').value = '';
+}
+function saveGasConfig() {
+  const url = document.getElementById('gas-url').value.trim();
+  const key = document.getElementById('gas-key').value.trim();
+  localStorage.setItem('catatku_gas_url', url);
+  localStorage.setItem('catatku_gas_key', key);
+  showToast('✅ Konfigurasi disimpan!');
+  initSettings();
+}
+function confirmClearAll() {
+  showConfirm('⚠️ Hapus Semua Data?', 'Semua data transaksi akan dihapus permanen. Ini tidak bisa dibatalkan!', '🗑️ Hapus Semua', 'btn-danger', () => {
+    setTx([]);
+    showToast('✅ Semua data dihapus!');
+  });
+}
+
+// ==================== GAS SYNC ====================
+async function syncToGas(tx) {
+  const url = getGasUrl();
+  const key = getGasKey();
+  if (!url || !key) return;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: key, action: 'add', data: tx }),
+      mode: 'no-cors'
+    });
+  } catch(e) {}
+}
+
+// ==================== PWA ====================
+function registerPWA() {
+  const swCode = `
+    const CACHE = 'catatku-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    });
+  `;
+  if ('serviceWorker' in navigator) {
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url).catch(() => {});
+  }
+}
+
+function injectManifest() {
+  const manifest = {
+    name: 'CatatKu - Catatan Penjualan',
+    short_name: 'CatatKu',
+    start_url: './',
+    display: 'standalone',
+    theme_color: '#16a34a',
+    background_color: '#f0fdf4',
+    icons: [
+      { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🏪</text></svg>', sizes: '192x192', type: 'image/svg+xml' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = url;
+  document.head.appendChild(link);
+}
+
+// ==================== INIT ====================
+function init() {
+  // Set date header
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('id-ID', opts);
+
+  // Check session
+  const lock = getLock();
+  if (lock > Date.now()) {
+    startLockCountdown(lock);
+  }
+
+  if (getSession()) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    showPage('dashboard');
+  }
+
+  registerPWA();
+  injectManifest();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
