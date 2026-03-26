@@ -2081,7 +2081,7 @@ function submitTransaksi() {
   const nominal = parseFloat(document.getElementById('tx-nominal').value) || 0;
   const ket  = document.getElementById('tx-ket').value.trim();
 
-  // VALIDASI
+  // ✅ VALIDASI
   if (!nama) { toast('Nama pelanggan wajib diisi!', 'error'); return; }
   if (nominal <= 0) { toast('Nominal harus lebih dari 0!', 'error'); return; }
   if (!tgl) { toast('Tanggal wajib diisi!', 'error'); return; }
@@ -2105,29 +2105,30 @@ function submitTransaksi() {
     createdAt: new Date().toISOString(),
   };
 
-  // SIMPAN LOCAL
+  // ✅ SIMPAN LOCAL
   state.transactions.unshift(tx);
   LS.set('transactions', state.transactions);
 
-  // KIRIM KE GOOGLE SHEETS (SUDAH AMAN 🔒)
+  // 🔥 KIRIM KE GOOGLE SHEETS (ANTI CORS)
+  const formData = new FormData();
+  formData.append("key", "@L1ce2020");
+  formData.append("nama", tx.nama);
+  formData.append("wa", tx.wa);
+  formData.append("tanggal", tx.tgl);
+  formData.append("jenis", tx.jenis);
+  formData.append("nominal", tx.nominal);
+  formData.append("total", tx.total);
+  formData.append("keuntungan", tx.profit);
+  formData.append("hutang", tx.hutang);
+  formData.append("keterangan", tx.keterangan);
+
   fetch('https://script.google.com/macros/s/AKfycbyveYd3Kc34UrYGy1C6c-ABc66SOs85sGJE2Fm-Fr5-wrY9TZOZrncdkVDoA1boSMZnGA/exec', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      key: "@L1ce2020",
-      nama: tx.nama,
-      wa: tx.wa,
-      tanggal: tx.tgl,
-      jenis: tx.jenis,
-      nominal: tx.nominal,
-      total: tx.total,
-      keuntungan: tx.profit,
-      hutang: tx.hutang,
-      keterangan: tx.keterangan
-    })
-  });
+    body: formData
+  })
+  .then(res => res.text())
+  .then(res => console.log("GAS:", res))
+  .catch(err => console.error("ERROR:", err));
 
   toast(`Transaksi ${nama} berhasil disimpan! 🎉`, 'success');
   navigate('dashboard');
