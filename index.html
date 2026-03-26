@@ -1341,14 +1341,20 @@ async function syncToGas(tx) {
   const url = getGasUrl();
   const key = getGasKey();
   if (!url || !key) return;
+
   try {
-    await fetch(url, {
+    const res = await fetch(url + '?secret=' + key, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: key, action: 'add', data: tx }),
-      mode: 'no-cors'
+      body: JSON.stringify(tx)
     });
-  } catch(e) {}
+
+    const result = await res.text();
+    console.log('GAS response:', result);
+
+  } catch (e) {
+    console.error('Gagal sync:', e);
+  }
 }
 
 // ==================== PWA ====================
